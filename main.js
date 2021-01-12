@@ -47,9 +47,9 @@ Vue.component('product', {
                 <div class="reviews">
                     <h2>Reviews</h2>
                     <p v-if="!reviews.length">There are no reviews yet. Be the first!</p>
-                    <ul class="review-list" v-else>
+                    <ul v-else class="review-list">
                         <li v-for="review in reviews">
-                            <div>{{ review.name + " (" + review.rating + ")" }}</div>
+                            <div>{{ review.name + " (" + review.rating + "/5)" }}</div>
                             <code>"{{ review.review }}"</code>
                         </li>
                     </ul>
@@ -176,11 +176,11 @@ Vue.component('product-review', {
             <p>
                 <p>Would you recommend this product?</p>
                 <label for="recommend">Yes</label>
-                <input type="radio" id="recommend" class="radios" name="recommend" value="yes">
+                <input type="radio" id="recommend" class="radios" name="recommend" value="yes" v-model="recommend">
                 <br />
                 <br />
                 <label for="donotrecommend">No</label>
-                <input type="radio" id="donotrecommend" class="radios" name="recommend" value="no">
+                <input type="radio" id="donotrecommend" class="radios" name="recommend" value="no" v-model="recommend">
             </p>
             <p>
                 <input type="submit" value="Submit">  
@@ -202,8 +202,8 @@ Vue.component('product-review', {
             this.errors = [];
             if (this.name && this.review && this.rating && this.recommend) {
                 let productReview = {
-                    name: this.name,
-                    review: this.review,
+                    name: this.name.trim(),
+                    review: this.review.trim(),
                     rating: this.rating,
                     recommend: this.recommend
                 };
