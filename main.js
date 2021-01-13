@@ -1,5 +1,7 @@
 'use-strict';
 
+var eventBus = new Vue();
+
 Vue.component('product', {
     props: {
         premium: {
@@ -44,19 +46,8 @@ Vue.component('product', {
                 <br/>
                 <br/>
                 
-                <div class="reviews">
-                    <h2>Reviews</h2>
-                    <p v-if="!reviews.length">There are no reviews yet. Be the first!</p>
-                    <ul v-else class="review-list">
-                        <li v-for="review in reviews">
-                            <div>{{ review.name + " (" + review.rating + "/5)" }}</div>
-                            <code>"{{ review.review }}"</code>
-                        </li>
-                    </ul>
-                </div>
+                <product-tabs :reviews="reviews"></product-tabs>
             </div>
-
-            <product-review @review-submitted="addReview"></product-review>
         </div>
     `,
     data() {
@@ -101,9 +92,6 @@ Vue.component('product', {
         },
         updateProduct(index) {
             this.selectedVariant = index;
-        },
-        addReview(productReview) {
-            this.reviews.push(productReview);
         }
     },
     computed: {
@@ -123,6 +111,11 @@ Vue.component('product', {
                 return `$2.99`;
             }
         }
+    },
+    mounted() {
+        eventBus.$on('review-submitted', productReview => {
+            this.reviews.push(productReview);
+        });
     }
 });
 
@@ -144,7 +137,10 @@ Vue.component('product-details', {
 
 Vue.component('product-review', {
     props: {
-
+        selectedTabFn: {
+            type: Function,
+            required: true
+        }
     },
     template: `
         <form class="review-form" @submit.prevent="onSubmit">
@@ -208,8 +204,9 @@ Vue.component('product-review', {
                     recommend: this.recommend
                 };
                 // send up to parent product component
-                this.$emit('review-submitted', productReview);
+                eventBus.$emit('review-submitted', productReview);
                 // reset data:
+                this.selectedTabFn('Reviews');
                 this.name = null;
                 this.review = null;
                 this.rating = null;
@@ -229,6 +226,50 @@ Vue.component('product-review', {
                 }
                 // don't reset data so user doesn't have to retype what they did fill in so far
             }
+        }
+    }
+});
+
+Vue.component('product-tabs', {
+    props: {
+        reviews: {
+            type: Array,
+            required: true
+        }
+    },
+    template: `
+        <div>
+            <span 
+                class="tab"
+                :class="{ activeTab: selectedTab === tab }"
+                v-for="(tab, index) in tabs" 
+                :key="index"
+                @click="selectedTab = tab">
+                {{ tab }}
+            </span>
+
+            <div class="reviews" v-show="(selectedTab === 'Reviews')">
+                <h2>Reviews</h2>
+                <p v-if="!reviews.length">There are no reviews yet. Be the first!</p>
+                <ul v-else class="review-list">
+                    <li v-for="review in reviews">
+                        <div>{{ review.name + " (" + review.rating + "/5)" }}</div>
+                        <code>"{{ review.review }}"</code>
+                    </li>
+                </ul>
+            </div>
+            <product-review v-show="(selectedTab === 'Make a Review')" :selectedTabFn="selectedTabFn"></product-review>
+        </div>
+    `,
+    data() {
+        return {
+            tabs: ['Reviews', 'Make a Review'],
+            selectedTab: 'Make a Review'
+        };
+    },
+    methods: {
+        selectedTabFn(tab) {
+            this.selectedTab = tab;
         }
     }
 });
